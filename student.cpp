@@ -1,0 +1,27 @@
+#include "student.hpp"
+
+Student::Student(){
+     this->id = -1;
+     this->name = "";
+     this->grade = 0;
+     this->free = true;
+     this->preferences = {};
+}
+
+Student::Student(int id, string name, int grade, vector<int> preferences){
+     this->id = id;
+     this->name = name;
+     this->grade = grade;
+     this->free = true;
+     this->preferences = preferences;
+}
+
+int Student::getId() {return this->id;}
+
+string Student::getName() {return this->name;}
+
+int Student::getGrade() {return this->grade;}
+
+bool Student::isFree() {return this->free;}
+
+vector<int> Student::getPreferencesId() {return this->preferences;}

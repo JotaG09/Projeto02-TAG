@@ -1,20 +1,21 @@
+#pragma once
 #include <iostream>
 #include <bits/stdc++.h>
-#include "project.hpp"
 
 using namespace std;
 
+class Project;
 class Student {
      private:
+          int id;
           string name;
           int grade;
           bool free;
-          Project** preferences;
-          Project* project;
+          vector<int> preferences;
      public:
           Student();
-          Student(string name, int grade, vector<int> preferences);
-          ~Student();
+          Student(int id, string name, int grade, vector<int> preferences);
+          int getId();
           string getName();
           int getGrade();
           bool isFree();

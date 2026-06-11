@@ -1,3 +1,4 @@
+#pragma once
 #include <iostream>
 #include <bits/stdc++.h>
 #include "project.hpp"
@@ -12,13 +13,13 @@ struct Node {
 
 class Graph{
      private:
-          int V = 250;
-          Node** vertex;
-          Student** students;
-          Project** projects;
+          int V;
+          vector<Node*> vertex;
+          vector<Student*> students;
+          vector<Project*> projects;
      public:
           Graph();
-          Graph(Student** students, Project** projects);
+          Graph(int vStudents, int vProjects, vector<Student*> students, vector<Project*> projects);
           void addEdge(int dest, int src);
           void removeEdge(int dest, int src);
           void galeShapley();
