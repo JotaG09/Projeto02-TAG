@@ -12,14 +12,15 @@ struct Node {
 
 class Graph{
      private:
-          int V;
+          int V = 250;
           Node** vertex;
           Student** students;
-          Projects** projects;
+          Project** projects;
      public:
           Graph();
-          Graph(int V);
+          Graph(Student** students, Project** projects);
           void addEdge(int dest, int src);
           void removeEdge(int dest, int src);
+          void galeShapley();
           void print();
 };
