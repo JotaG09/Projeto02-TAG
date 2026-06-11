@@ -7,6 +7,7 @@ Project::Project(){
      this->maxStudents = 0;
 }
 
+// This function makes a project object that have a min grade and a max of students
 Project::Project(int id, string name, int minGrade, int maxStudents){
      this->id = id;
      this->name = name;

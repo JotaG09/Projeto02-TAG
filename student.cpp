@@ -8,6 +8,7 @@ Student::Student(){
      this->preferences = {};
 }
 
+// This function makes a student object that is naturaly free and with a preferences list of projects
 Student::Student(int id, string name, int grade, vector<int> preferences){
      this->id = id;
      this->name = name;

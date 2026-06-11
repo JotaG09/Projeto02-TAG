@@ -12,6 +12,7 @@ Graph::Graph(){
      this->projects = vector<Project*>(V);
 }
 
+// This function makes a graph, with a students, projects, and a list of vertex
 Graph::Graph(int vStudents, int vProjects, vector<Student*> students, vector<Project*> projects){
      this->V = vStudents + vProjects;
      this->vertex = vector<Node*>(this->V, nullptr);
