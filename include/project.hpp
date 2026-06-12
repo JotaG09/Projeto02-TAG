@@ -20,5 +20,4 @@ class Project{
           int getMinGrade();
           int getMaxStudents();
           vector<int> getStudentsId();
-          
 };

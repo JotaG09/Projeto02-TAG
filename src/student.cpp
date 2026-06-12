@@ -26,3 +26,10 @@ int Student::getGrade() {return this->grade;}
 bool Student::isFree() {return this->free;}
 
 vector<int> Student::getPreferencesId() {return this->preferences;}
+
+int Student::ProjectId() {
+    if (!this->free) { // Se o estudante não estiver livre, significa que ele está alocado em um projeto, então retornamos o id do projeto em que ele está alocado
+        return this->id;
+    }
+    return -1;
+}

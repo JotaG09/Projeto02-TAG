@@ -10,7 +10,7 @@ class Student {
           int id;
           string name;
           int grade;
-          bool free;
+          bool free;    
           vector<int> preferences;
      public:
           Student();

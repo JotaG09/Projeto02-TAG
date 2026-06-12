@@ -23,3 +23,11 @@ int Project::getMinGrade() {return this->minGrade;}
 
 int Project::getMaxStudents() {return this->maxStudents;}
 
+vector<int> Project::getStudentsId() {
+    vector<int> studentsId; // Este vetor irá armazenar os ids dos estudantes alocados no projeto
+    for (int i = 0; i < this->maxStudents; i++) { // Loop for para preencher o vetor de ids dos estudantes com -1, indicando que não há estudantes alocados inicialmente
+        studentsId.push_back(-1);
+    }
+    return studentsId;
+}
+
