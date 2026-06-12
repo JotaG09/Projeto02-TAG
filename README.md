@@ -22,6 +22,7 @@ Projeto02-TAG/
 │
 ├── Makefile           # Script de automação da compilação
 └── README.md          # Este arquivo de instruções
+```
 
 ## Como Executar
 ### 1. Clonar o repositório
