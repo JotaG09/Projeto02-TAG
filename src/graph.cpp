@@ -86,3 +86,9 @@ void Graph::removeEdge(int studentId, int projectId)
         temp2 = temp2->next; // Move para o próximo nó na lista de adjacências do estudante
     }
 }
+
+void Graph::galeShapley()
+{
+    // Implementação do algoritmo de Gale-Shapley para alocação de estudantes em projetos
+    // Este método deve ser implementado para realizar a alocação dos estudantes nos projetos com base em suas preferências e nas restrições dos projetos
+}
