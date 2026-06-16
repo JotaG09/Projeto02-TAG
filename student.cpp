@@ -26,3 +26,15 @@ int Student::getGrade() {return this->grade;}
 bool Student::isFree() {return this->free;}
 
 vector<int> Student::getPreferencesId() {return this->preferences;}
+
+void Student::libarate() {this->free = true;}
+
+void Student::occupy() {this->free = false;}
+
+bool Student::comparePreferences(int currentProject, int proposeProject){
+     for(int i = 0; i < (this->preferences).size(); i++){
+          if(currentProject == (this->preferences[i])) break;
+          else if(proposeProject == (this->preferences[i])) return true;
+     }
+     return false;
+}

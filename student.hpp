@@ -21,4 +21,7 @@ class Student {
           bool isFree();
           vector<int> getPreferencesId();
           int ProjectId();
+          void libarate();
+          void occupy();
+          bool comparePreferences(int currentProject, int proposeProject);
 };
