@@ -33,7 +33,7 @@ void carregar_dados(const string &nome_arquivo, vector<Student *> &lista_alunos,
             char lixo; // Variável para descartar carateres como '(', 'P', ',', ')'
             int pId, vagas, notaMin;
 
-            ss >> lixo >> lixo >> pId >> lixo >> vagas >> lixo >> notaMin;
+            ss >> lixo >> lixo >> pId >> lixo >> vagas >> lixo >> notaMin; // Lê os dados do projeto, descartando os caracteres desnecessários
 
             string nomeProjeto = "Projeto " + to_string(pId);
             // Cria o objeto dinamicamente e adiciona ao vetor
@@ -62,13 +62,11 @@ void carregar_dados(const string &nome_arquivo, vector<Student *> &lista_alunos,
     file.close();
 }
 
-
-
 int main()
 {
 
-    vector<Student *> lista_alunos;
-    vector<Project *> lista_projetos;
+    vector<Student *> lista_alunos;   // Vetor que armazena ponteiros para objetos do tipo Student
+    vector<Project *> lista_projetos; // Vetor que armazena ponteiros para objetos do tipo Project
 
     carregar_dados("docs/entradaProj2.26TAG.txt", lista_alunos, lista_projetos);
 
@@ -77,4 +75,3 @@ int main()
 
     return 0;
 }
-
