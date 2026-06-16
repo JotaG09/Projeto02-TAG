@@ -31,7 +31,7 @@ void Student::setFree(bool isFree) { this->free = isFree; }
 
 vector<int> Student::getPreferencesId() { return this->preferences; }
 
-int Student::ProjectId()
+int Student::getProjectId()
 {
     return this->allocatedProjectId; // Retorna o id do projeto em que o estudante está alocado, ou -1 se ele estiver livre
 }
