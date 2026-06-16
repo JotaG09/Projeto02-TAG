@@ -2,8 +2,16 @@
 #include <stack>
 #include <queue>
 #include "graph.hpp"
+#include <algorithm>
 
 using namespace std;
+
+// CÓDIGO DE CORES ANSI PARA O TERMINAL
+#define RESET "\033[0m"
+#define RED "\033[31m" // Rejeição
+#define GREEN   "\033[32m" // Alocação temporária
+#define YELLOW  "\033[33m" // Proposta Ativa
+
 
 Graph::Graph()
 {
@@ -91,4 +99,21 @@ void Graph::galeShapley()
 {
     // Implementação do algoritmo de Gale-Shapley para alocação de estudantes em projetos
     // Este método deve ser implementado para realizar a alocação dos estudantes nos projetos com base em suas preferências e nas restrições dos projetos
+
+
+    cout << "\n===  Iteração 1: Algoritmo de Gale-Shapley inicial ===\n" << endl;
+
+
+
+    queue<int> AlunosLivres; // Fila para armazenar os ids dos estudantes livres
+
+    for(size_t i = 0; i < this->students.size(); i++) {
+        AlunosLivres.push(this->students[i]->getId()); // Inicialmente, todos os estudantes estão livres, então adicionamos seus ids à fila
+    }
+
+    // Vetor para rastrear a próxima preferência a ser proposta por cada estudante, inicializado com 0 (índice 0, 1 ou 2)
+    vector<int> proximaPreferencia(students.size() + 1, 0);
+
+
+
 }

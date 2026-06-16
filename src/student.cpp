@@ -38,5 +38,4 @@ int Student::getProjectId()
 void Student::setProject(int projectId)
 {
     this->allocatedProjectId = projectId; // Define o id do projeto em que o estudante está alocado
-    this->free = (projectId == -1);       // Se o id do projeto for -1, o estudante está livre, caso contrário, ele não está livre
 }

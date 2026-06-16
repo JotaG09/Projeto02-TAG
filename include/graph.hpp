@@ -14,9 +14,9 @@ struct Node {
 class Graph{
      private:
           int V;
-          vector<Node*> vertex;
-          vector<Student*> students;
-          vector<Project*> projects;
+          vector<Node*> vertex; // Vetor de ponteiros para os nós do grafo, onde cada posição representa um vértice (estudante ou projeto) e aponta para a lista de adjacências daquele vértice
+          vector<Student*> students; // Vetor de ponteiros para objetos do tipo Student do grafo
+          vector<Project*> projects; // Vetor de ponteiros para objetos do tipo Project do grafo
      public:
           Graph();
           Graph(int vStudents, int vProjects, vector<Student*> students, vector<Project*> projects);

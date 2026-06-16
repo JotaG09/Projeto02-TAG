@@ -65,6 +65,11 @@ void carregar_dados(const string &nome_arquivo, vector<Student *> &lista_alunos,
 int main()
 {
 
+
+    // vector<int> teste(5,0);
+
+    // cout << teste[1] << endl;
+
     vector<Student *> lista_alunos;   // Vetor que armazena ponteiros para objetos do tipo Student
     vector<Project *> lista_projetos; // Vetor que armazena ponteiros para objetos do tipo Project
 
