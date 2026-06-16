@@ -8,10 +8,9 @@ using namespace std;
 
 // CÓDIGO DE CORES ANSI PARA O TERMINAL
 #define RESET "\033[0m"
-#define RED "\033[31m" // Rejeição
-#define GREEN   "\033[32m" // Alocação temporária
-#define YELLOW  "\033[33m" // Proposta Ativa
-
+#define RED "\033[31m"    // Rejeição
+#define GREEN "\033[32m"  // Alocação temporária
+#define YELLOW "\033[33m" // Proposta Ativa
 
 Graph::Graph()
 {
@@ -100,20 +99,69 @@ void Graph::galeShapley()
     // Implementação do algoritmo de Gale-Shapley para alocação de estudantes em projetos
     // Este método deve ser implementado para realizar a alocação dos estudantes nos projetos com base em suas preferências e nas restrições dos projetos
 
-
-    cout << "\n===  Iteração 1: Algoritmo de Gale-Shapley inicial ===\n" << endl;
-
-
+    cout << "\n===  Iteração 1: Algoritmo de Gale-Shapley inicial ===\n"
+         << endl;
 
     queue<int> AlunosLivres; // Fila para armazenar os ids dos estudantes livres
 
-    for(size_t i = 0; i < this->students.size(); i++) {
+    for (size_t i = 0; i < this->students.size(); i++)
+    {
         AlunosLivres.push(this->students[i]->getId()); // Inicialmente, todos os estudantes estão livres, então adicionamos seus ids à fila
     }
 
     // Vetor para rastrear a próxima preferência a ser proposta por cada estudante, inicializado com 0 (índice 0, 1 ou 2)
     vector<int> proximaPreferencia(students.size() + 1, 0);
 
+    while (!AlunosLivres.empty())
+    {
+        int AlunoId = AlunosLivres.front(); // Pega o id do primeiro estudante livre na fila
+        AlunosLivres.pop();                 // Remove o estudante da fila
 
+        Student *aluno = nullptr; // Ponteiro para o objeto do tipo Student correspondente ao id do estudante
 
+        // o tipo "auto" é usado para deduzir automaticamente o tipo da variável "s" com base no tipo dos elementos do vetor "students". Neste caso, "s" será deduzido como um ponteiro para um objeto do tipo Student, ou seja, "Student*". Isso permite que o código seja mais conciso e legível, sem a necessidade de declarar explicitamente o tipo da variável "s".
+        for (auto s : students) // Percorre o vetor de estudantes para encontrar o objeto do tipo Student correspondente ao id do estudante
+        {
+            if (s->getId() == AlunoId)
+            {
+                aluno = s;
+                break;
+            }
+        }
+        if (!aluno || !aluno->isFree())
+            continue;
+
+        vector<int> preferencias = aluno->getPreferencesId(); // Obtém o vetor de ids dos projetos preferidos pelo estudante, em ordem de preferência
+
+        int indexPreferencia = proximaPreferencia[AlunoId]; // Obtém o índice da próxima preferência a ser proposta pelo estudante
+
+        if (indexPreferencia >= preferencias.size())
+        {
+            continue; // Se o estudante já tiver proposto para todas as suas 3 preferências, passa para a próxima iteração do loop
+        }
+
+        int projetoId = preferencias[indexPreferencia]; // Obtém o id do projeto correspondente à próxima preferência do estudante
+        proximaPreferencia[AlunoId]++;                  // Incrementa para a próxima preferência caso seja rejeitado
+
+        Project *projeto = nullptr;
+
+        for (auto p : projects) // Percorre o vetor de projetos para encontrar o objeto do tipo Project correspondente ao id do projeto
+        {
+            if (p->getId() == projetoId)
+            {
+                projeto = p;
+                break;
+            }
+        }
+
+        if (!projeto)
+            continue;
+
+        cout << YELLOW << "[Proposta Ativa]" << RESET
+             << "Aluno A" << AlunoId << "Não possui a nota mínima ("
+             << projeto->getMinGrade() << ") para o projeto P" << projetoId << endl;
+
+        AlunosLivres.push(AlunoId); // Se o estudante não atender à nota mínima exigida pelo projeto, ele permanece livre e é adicionado de volta à fila para tentar a próxima preferência
+        continue;
+    }
 }
