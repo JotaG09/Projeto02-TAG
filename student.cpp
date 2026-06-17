@@ -1,0 +1,40 @@
+#include "student.hpp"
+
+Student::Student(){
+     this->id = -1;
+     this->name = "";
+     this->grade = 0;
+     this->free = true;
+     this->preferences = {};
+}
+
+// This function makes a student object that is naturaly free and with a preferences list of projects
+Student::Student(int id, string name, int grade, vector<int> preferences){
+     this->id = id;
+     this->name = name;
+     this->grade = grade;
+     this->free = true;
+     this->preferences = preferences;
+}
+
+int Student::getId() {return this->id;}
+
+string Student::getName() {return this->name;}
+
+int Student::getGrade() {return this->grade;}
+
+bool Student::isFree() {return this->free;}
+
+vector<int> Student::getPreferencesId() {return this->preferences;}
+
+void Student::libarate() {this->free = true;}
+
+void Student::occupy() {this->free = false;}
+
+bool Student::comparePreferences(int currentProject, int proposeProject){
+     for(int i = 0; i < (this->preferences).size(); i++){
+          if(currentProject == (this->preferences[i])) break;
+          else if(proposeProject == (this->preferences[i])) return true;
+     }
+     return false;
+}
