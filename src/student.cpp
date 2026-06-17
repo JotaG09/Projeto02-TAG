@@ -1,41 +1,40 @@
 #include "student.hpp"
 
-Student::Student()
-{
-    this->id = -1;
-    this->name = "";
-    this->grade = 0;
-    this->free = true;
-    this->preferences = {};
+Student::Student(){
+     this->id = -1;
+     this->name = "";
+     this->grade = 0;
+     this->free = true;
+     this->preferences = {};
 }
 
 // This function makes a student object that is naturaly free and with a preferences list of projects
-Student::Student(int id, string name, int grade, vector<int> preferences)
-{
-    this->id = id;
-    this->name = name;
-    this->grade = grade;
-    this->free = true;
-    this->preferences = preferences;
+Student::Student(int id, string name, int grade, vector<int> preferences){
+     this->id = id;
+     this->name = name;
+     this->grade = grade;
+     this->free = true;
+     this->preferences = preferences;
 }
 
-int Student::getId() { return this->id; }
+int Student::getId() {return this->id;}
 
-string Student::getName() { return this->name; }
+string Student::getName() {return this->name;}
 
-int Student::getGrade() { return this->grade; }
+int Student::getGrade() {return this->grade;}
 
-bool Student::isFree() { return this->free; }
+bool Student::isFree() {return this->free;}
 
-void Student::setFree(bool isFree) { this->free = isFree; }
+vector<int> Student::getPreferencesId() {return this->preferences;}
 
-vector<int> Student::getPreferencesId() { return this->preferences; }
+void Student::libarate() {this->free = true;}
 
-int Student::getProjectId()
-{
-    return this->allocatedProjectId; // Retorna o id do projeto em que o estudante está alocado, ou -1 se ele estiver livre
-}
-void Student::setProject(int projectId)
-{
-    this->allocatedProjectId = projectId; // Define o id do projeto em que o estudante está alocado
+void Student::occupy() {this->free = false;}
+
+bool Student::comparePreferences(int currentProject, int proposeProject){
+     for(size_t i = 0; i < (this->preferences).size(); i++){
+          if(currentProject == (this->preferences[i])) break;
+          else if(proposeProject == (this->preferences[i])) return true;
+     }
+     return false;
 }
