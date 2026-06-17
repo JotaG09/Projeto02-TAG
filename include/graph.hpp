@@ -20,8 +20,8 @@ class Graph{
      public:
           Graph();
           Graph(int vStudents, int vProjects, vector<Student*> students, vector<Project*> projects);
-          void addEdge(int dest, int src);
-          void removeEdge(int dest, int src);
+          void addEdge(int studentId, int projectId);
+          void removeEdge(int studentId, int projectId);
           void galeShapley();
           void print();
 };
