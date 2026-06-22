@@ -108,6 +108,10 @@ int main()
         // 4. Imprime a Matriz Final de Ganhos / Perdas no terminal
         g.print();
 
+        g.saveToDot("docs/grafo_emparelhado.dot", true);
+
+        cout << "Arquivo de visualização gerado em: docs/grafo_emparelhado.dot" << endl;
+
         // 5. Opcional: Gera o snapshot visual para o Graphviz
         // g.gerarSnapshotVisual("docs/grafo_final.dot");
     }

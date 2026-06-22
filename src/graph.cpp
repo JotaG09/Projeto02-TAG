@@ -277,3 +277,92 @@ void Graph::print()
          << " de " << this->students.size() << " candidatos." << RESET << "\n"
          << endl;
 }
+
+void Graph::saveToDot(const string &nome_arquivo, bool apenasAlocados)
+{
+    ofstream out(nome_arquivo);
+    if (!out.is_open())
+    {
+        cerr << "Erro ao criar o ficheiro DOT: " << nome_arquivo << endl;
+        return;
+    }
+
+    out << "graph G {\n";
+    out << "  rankdir=LR;\n";   // Desenha da Esquerda (Projetos) para a Direita (Alunos)
+    out << "  splines=true;\n"; // Linhas curvas e suaves
+    out << "  node [fontname=\"Helvetica,Arial\", style=filled];\n\n";
+
+    // ---------------------------------------------------------
+    // 1. COLUNA DA ESQUERDA: PROJETOS
+    // ---------------------------------------------------------
+    out << "  subgraph cluster_projetos {\n";
+    out << "    label=\"PROJETOS OFERTADOS\";\n";
+    out << "    bgcolor=\"#F8FAFC\"; color=\"#CBD5E1\";\n";
+    out << "    node [shape=box, fillcolor=\"#DBEAFE\", color=\"#1E3A8A\", fontcolor=\"#1E3A8A\"];\n";
+
+    for (Project *p : this->projects)
+    {
+        int pId = p->getId();
+
+        // Conta quantos alunos estão fisicamente ligados a este projeto
+        int ocupadas = 0;
+        Node *curr = this->vertex[OFFSET + pId];
+        while (curr != nullptr)
+        {
+            ocupadas++;
+            curr = curr->next;
+        }
+
+        // Se o filtro estiver ativo e o projeto estiver vazio, não desenha
+        if (apenasAlocados && ocupadas == 0)
+            continue;
+
+        out << "    P" << pId << " [label=\"P" << pId << " (" << ocupadas << "/" << p->getMaxStudents() << " vagas)\"];\n";
+    }
+    out << "  }\n\n";
+
+    // ---------------------------------------------------------
+    // 2. COLUNA DA DIREITA: ALUNOS
+    // ---------------------------------------------------------
+    out << "  subgraph cluster_alunos {\n";
+    out << "    label=\"ALUNOS CANDIDATOS\";\n";
+    out << "    bgcolor=\"#F8FAFC\"; color=\"#CBD5E1\";\n";
+
+    for (Student *s : this->students)
+    {
+        int sId = s->getId();
+        bool possuiProjeto = (this->vertex[sId] != nullptr);
+
+        if (apenasAlocados && !possuiProjeto)
+            continue;
+
+        if (possuiProjeto)
+        {
+            // Aluno com vaga -> Elipse Verde
+            out << "    A" << sId << " [shape=ellipse, fillcolor=\"#DCFCE7\", color=\"#166534\", fontcolor=\"#166534\", label=\"A" << sId << " (Nota " << s->getGrade() << ")\"];\n";
+        }
+        else
+        {
+            // Aluno sem vaga -> Elipse Vermelha
+            out << "    A" << sId << " [shape=ellipse, fillcolor=\"#FEE2E2\", color=\"#991B1B\", fontcolor=\"#991B1B\", label=\"A" << sId << " (Sem Vaga)\"];\n";
+        }
+    }
+    out << "  }\n\n";
+
+    // ---------------------------------------------------------
+    // 3. ARESTAS (AS LIGAÇÕES DO EMPARELHAMENTO)
+    // ---------------------------------------------------------
+    out << "  // Conexões de Emparelhamento Estável\n";
+    for (Student *s : this->students)
+    {
+        int sId = s->getId();
+        if (this->vertex[sId] != nullptr)
+        {
+            int pId = this->vertex[sId]->dest; // O destino real do aluno é o ID do projeto
+            out << "  A" << sId << " -- P" << pId << " [color=\"#166534\", penwidth=2.0];\n";
+        }
+    }
+
+    out << "}\n";
+    out.close();
+}
