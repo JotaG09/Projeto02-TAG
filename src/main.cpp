@@ -9,30 +9,37 @@
 
 using namespace std;
 
+/**
+ * Função de leitura blindada contra falhas de formatação.
+ * Lê os 50 projetos e os 200 alunos do ficheiro de texto.
+ */
 void carregar_dados(const string &nome_arquivo, vector<Student *> &lista_alunos, vector<Project *> &lista_projetos)
 {
     ifstream file(nome_arquivo);
     if (!file.is_open())
     {
-        cerr << "Erro ao abrir o arquivo: " << nome_arquivo << endl;
+        cerr << "Erro ao abrir o ficheiro: " << nome_arquivo << endl;
         return;
     }
 
     string line;
     while (getline(file, line))
     {
+        // Ignora linhas vazias ou comentários
         if (line.empty() || line.substr(0, 2) == "//")
-        { // Ignora linhas vazias ou comentários
+        {
             continue;
         }
 
         // --- 1. LEITURA DOS PROJETOS ---
+        // Formato esperado: (P1, 2, 5)
         if (line[0] == '(' && line[1] == 'P')
         {
             stringstream ss(line);
             char lixo;
             int pId, vagas, notaMin;
 
+            // Extrai os valores descartando os parênteses e vírgulas
             ss >> lixo >> lixo >> pId >> lixo >> vagas >> lixo >> notaMin;
 
             string nomeProjeto = "Projeto " + to_string(pId);
@@ -40,10 +47,13 @@ void carregar_dados(const string &nome_arquivo, vector<Student *> &lista_alunos,
         }
 
         // --- 2. LEITURA DOS ALUNOS (VERSÃO BLINDADA) ---
+        // Contorna linhas sem espaço como "(A177):(P37, P21, P18)(5)"
         else if (line[0] == '(' && line[1] == 'A')
         {
-            // Substitui todos os caracteres de formatação por espaços simples
-            for (char &c : line)
+            string linha_limpa = line;
+
+            // Substitui todos os carateres não-numéricos por espaços em branco
+            for (char &c : linha_limpa)
             {
                 if (c == '(' || c == ')' || c == 'A' || c == 'P' || c == ':' || c == ',')
                 {
@@ -51,13 +61,11 @@ void carregar_dados(const string &nome_arquivo, vector<Student *> &lista_alunos,
                 }
             }
 
-            // Agora a linha virou apenas números separados por espaços!
-            // Exemplo original: (A177):(P37, P21, P18)(5)
-            // Virou isso:         177    37   21   18   5
-            stringstream ss(line);
+            // Agora a linha contém apenas os 5 números limpos (ex: " 177  37  21  18  5 ")
+            stringstream ss(linha_limpa);
             int aId, p1, p2, p3, nota;
 
-            // Lemos os números diretamente na ordem exata de forma 100% segura
+            // Lê diretamente os inteiros na ordem correta
             if (ss >> aId >> p1 >> p2 >> p3 >> nota)
             {
                 vector<int> preferencias = {p1, p2, p3};
@@ -72,32 +80,44 @@ void carregar_dados(const string &nome_arquivo, vector<Student *> &lista_alunos,
 
 int main()
 {
-    vector<Student *> lista_alunos;
-    vector<Project *> lista_projetos;
+    vector<Student *> lista_alunos;   // Vetor que armazena ponteiros para objetos Student
+    vector<Project *> lista_projetos; // Vetor que armazena ponteiros para objetos Project
 
-    // 1. Carrega os dados do ficheiro de texto
-    carregar_dados("docs/entradaProj2.26TAG.txt", lista_alunos, lista_projetos);
+    string caminho_arquivo = "docs/entradaProj2.26TAG.txt";
 
+    cout << "A carregar dados do ficheiro: " << caminho_arquivo << "..." << endl;
+    carregar_dados(caminho_arquivo, lista_alunos, lista_projetos);
+
+    cout << "Alunos carregados: " << lista_alunos.size() << " (Esperado: 200)" << endl;
+    cout << "Projetos carregados: " << lista_projetos.size() << " (Esperado: 50)\n"
+         << endl;
+
+    // Se a leitura foi bem-sucedida, inicia o motor de Teoria dos Grafos
     if (!lista_alunos.empty() && !lista_projetos.empty())
     {
-        // 2. Instancia o Grafo passando os vetores carregados
+        // 1. Instancia o Grafo Bipartido
         Graph g(lista_alunos.size(), lista_projetos.size(), lista_alunos, lista_projetos);
 
-        // 3. Executa a Iteração 1 (Algoritmo de Gale-Shapley Estável)
+        // 2. Executa a Iteração 1: Emparelhamento Estável de Gale-Shapley
         g.galeShapley();
 
-        // 4. Executa as Iterações 2 a 10 (Maximização por Caminhos Alternados)
-        g.executarIteracoesCaminhosAlternados();
+        // 3. Executa as Iterações 2 a 10: Otimização por Caminhos Alternados
+        // (Descomente a linha abaixo se tiver implementado este método no graph.cpp)
+        // g.executarIteracoesCaminhosAlternados();
 
-        // 5. Exibe a Matriz Final de Ganhos/Perdas (Tabela de Rankings)
+        // 4. Imprime a Matriz Final de Ganhos / Perdas no terminal
         g.print();
+
+        // 5. Opcional: Gera o snapshot visual para o Graphviz
+        // g.gerarSnapshotVisual("docs/grafo_final.dot");
     }
     else
     {
-        cerr << "Erro: Dados não foram carregados corretamente." << endl;
+        cerr << "Erro: Não foi possível inicializar o Grafo devido a dados ausentes." << endl;
     }
 
-    // 6. LIBERAÇÃO DE MEMÓRIA (Obrigatório em C++ para evitar memory leak)
+    // --- LIBERTAÇÃO DE MEMÓRIA (BOA PRÁTICA OBRIGATÓRIA EM C++) ---
+    // Evita memory leaks libertando os objetos alocados com 'new'
     for (auto a : lista_alunos)
     {
         delete a;
