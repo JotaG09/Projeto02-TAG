@@ -38,3 +38,11 @@ bool Student::comparePreferences(int currentProject, int proposeProject){
      }
      return false;
 }
+
+void Student::setProject(int projectId) {
+    this->allocatedProject = projectId;
+}
+
+int Student::ProjectId() {
+    return this->allocatedProject;
+}

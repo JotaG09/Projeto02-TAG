@@ -21,42 +21,50 @@ void carregar_dados(const string &nome_arquivo, vector<Student *> &lista_alunos,
     string line;
     while (getline(file, line))
     {
-
         if (line.empty() || line.substr(0, 2) == "//")
         { // Ignora linhas vazias ou comentários
             continue;
         }
 
+        // --- 1. LEITURA DOS PROJETOS ---
         if (line[0] == '(' && line[1] == 'P')
-        { // Verifica se a linha é do tipo projeto
+        {
             stringstream ss(line);
-            char lixo; // Variável para descartar carateres como '(', 'P', ',', ')'
+            char lixo;
             int pId, vagas, notaMin;
 
-            ss >> lixo >> lixo >> pId >> lixo >> vagas >> lixo >> notaMin; // Lê os dados do projeto, descartando os caracteres desnecessários
+            ss >> lixo >> lixo >> pId >> lixo >> vagas >> lixo >> notaMin;
 
             string nomeProjeto = "Projeto " + to_string(pId);
-            // Cria o objeto dinamicamente e adiciona ao vetor
             lista_projetos.push_back(new Project(pId, nomeProjeto, notaMin, vagas));
         }
 
+        // --- 2. LEITURA DOS ALUNOS (VERSÃO BLINDADA) ---
         else if (line[0] == '(' && line[1] == 'A')
-        { // Verifica se a linha é do tipo aluno
+        {
+            // Substitui todos os caracteres de formatação por espaços simples
+            for (char &c : line)
+            {
+                if (c == '(' || c == ')' || c == 'A' || c == 'P' || c == ':' || c == ',')
+                {
+                    c = ' ';
+                }
+            }
+
+            // Agora a linha virou apenas números separados por espaços!
+            // Exemplo original: (A177):(P37, P21, P18)(5)
+            // Virou isso:         177    37   21   18   5
             stringstream ss(line);
-            char lixo; // Variável para descartar carateres como '(', 'A', ',', ')'
-            int aId, nota;
-            int p1, p2, p3;
-            string nomeAluno;
+            int aId, p1, p2, p3, nota;
 
-            ss >> lixo >> lixo >> aId >> lixo >> lixo >> lixo;
-            ss >> lixo >> p1 >> lixo >> lixo >> p2 >> lixo >> lixo >> p3 >> lixo;
-            ss >> lixo >> nota >> lixo;
+            // Lemos os números diretamente na ordem exata de forma 100% segura
+            if (ss >> aId >> p1 >> p2 >> p3 >> nota)
+            {
+                vector<int> preferencias = {p1, p2, p3};
+                string nomeAluno = "Aluno " + to_string(aId);
 
-            vector<int> preferencias = {p1, p2, p3};
-            nomeAluno = "Aluno " + to_string(aId);
-
-            // Cria o objeto dinamicamente e adiciona ao vetor
-            lista_alunos.push_back(new Student(aId, nomeAluno, nota, preferencias));
+                lista_alunos.push_back(new Student(aId, nomeAluno, nota, preferencias));
+            }
         }
     }
     file.close();

@@ -26,4 +26,5 @@ class Graph{
           bool buscarCaminhoAlternado(Student* s, map<int,bool>& visitados);
           void executarIteracoesCaminhosAlternados();
           void print();
+          void gerarSnapshotVisual(const string& nomeArquivo, int estudanteAtivo = -1, int projetoAtivo = -1, int estudanteRejeitado = -1);
 };

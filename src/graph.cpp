@@ -11,6 +11,8 @@
 #define RED "\033[31m"    // Rejeição / Desemparelhamento
 #define GREEN "\033[32m"  // Emparelhamento temporário / definitivo
 #define YELLOW "\033[33m" // Proposta ativa
+#define CYAN "\033[36m"
+#define BOLD "\033[1m"
 
 using namespace std;
 
@@ -31,24 +33,23 @@ Graph::Graph(int vStudents, int vProjects, vector<Student *> students, vector<Pr
 
 void Graph::addEdge(int studentId, int projectId)
 {
-    // Adiciona na lista de adjacência do projeto
     Node *newNode = new Node();
     newNode->dest = studentId;
     newNode->next = this->vertex[projectId];
     this->vertex[projectId] = newNode;
 
-    // Adiciona na lista de adjacência do estudante
     Node *newNode2 = new Node();
     newNode2->dest = projectId;
     newNode2->next = this->vertex[studentId];
     this->vertex[studentId] = newNode2;
 
-    // Atualiza o estado do estudante
-    for (auto s : students)
+    // Vínculo direto e seguro via POO
+    for (auto s : this->students)
     {
         if (s->getId() == studentId)
         {
             s->occupy();
+            s->setProject(projectId); // <--- Adicione isso se tiver criado o setProject, ou gerencie via classe
             break;
         }
     }
@@ -91,11 +92,12 @@ void Graph::removeEdge(int studentId, int projectId)
     }
 
     // Libera o estado do estudante
-    for (auto s : students)
+    for (auto s : this->students)
     {
         if (s->getId() == studentId)
         {
             s->libarate();
+            s->setProject(-1); // <--- Reseta o projeto alocado
             break;
         }
     }
@@ -368,4 +370,93 @@ void Graph::executarIteracoesCaminhosAlternados()
 
 void Graph::print()
 {
+    cout << "\n"
+         << CYAN << BOLD << "============================================================================================" << RESET << endl;
+    cout << CYAN << BOLD << "                      MATRIZ FINAL DE EMPARELHAMENTOS (GANHOS / PERDAS)                     " << RESET << endl;
+    cout << CYAN << BOLD << "============================================================================================" << RESET << "\n"
+         << endl;
+
+    cout << left
+         << setw(12) << "Aluno"
+         << setw(15) << "Proj. Alocado"
+         << setw(45) << "Classificação do Aluno (No Projeto)"
+         << "Classificação do Projeto (No Aluno)" << endl;
+    cout << string(100, '-') << endl;
+
+    int totalEmparelhados = 0;
+
+    for (auto s : this->students)
+    {
+        // Validação estrita: o aluno só entra na tabela se não estiver livre e tiver um projeto válido (1 a 50)
+        if (s->isFree() || s->ProjectId() <= 0 || s->ProjectId() > 50)
+        {
+            continue;
+        }
+
+        totalEmparelhados++;
+        int pId = s->ProjectId();
+
+        // 1. CLASSIFICAÇÃO DO PROJETO NA VISÃO DO ALUNO
+        vector<int> prefsAluno = s->getPreferencesId();
+        int rankProjetoNoAluno = 0;
+        for (size_t i = 0; i < prefsAluno.size(); i++)
+        {
+            if (prefsAluno[i] == pId)
+            {
+                rankProjetoNoAluno = i + 1;
+                break;
+            }
+        }
+
+        // 2. CLASSIFICAÇÃO DO ALUNO NA VISÃO DO PROJETO (Baseado em todos os que listaram este projeto)
+        vector<Student *> candidatosDoProjeto;
+        for (auto outroAluno : this->students)
+        {
+            vector<int> outPrefs = outroAluno->getPreferencesId();
+            if (find(outPrefs.begin(), outPrefs.end(), pId) != outPrefs.end())
+            {
+                candidatosDoProjeto.push_back(outroAluno);
+            }
+        }
+
+        // Ordenação estável por mérito: Nota Agregada (descendente). Se igual, ID (crescente)
+        sort(candidatosDoProjeto.begin(), candidatosDoProjeto.end(), [](Student *a, Student *b)
+             {
+            if (a->getGrade() != b->getGrade()) {
+                return a->getGrade() > b->getGrade();
+            }
+            return a->getId() < b->getId(); });
+
+        int rankAlunoNoProjeto = 0;
+        int totalCandidatosNoProjeto = candidatosDoProjeto.size();
+        for (size_t i = 0; i < candidatosDoProjeto.size(); i++)
+        {
+            if (candidatosDoProjeto[i]->getId() == s->getId())
+            {
+                rankAlunoNoProjeto = i + 1;
+                break;
+            }
+        }
+
+        // 3. IMPRESSÃO FORMATADA DA LINHA
+        string strAluno = "A" + to_string(s->getId());
+        string strProject = "P" + to_string(pId);
+
+        string strClassifProjeto = to_string(rankAlunoNoProjeto) + "º (Top " +
+                                   to_string(rankAlunoNoProjeto) + " de " +
+                                   to_string(totalCandidatosNoProjeto) + " na lista P" + to_string(pId) + ")";
+
+        string strClassifAluno = to_string(rankProjetoNoAluno) + "º escolha do Aluno";
+
+        cout << left
+             << setw(12) << strAluno
+             << setw(15) << strProject
+             << setw(45) << strClassifProjeto
+             << strClassifAluno << endl;
+    }
+
+    cout << string(100, '-') << endl;
+    cout << GREEN << BOLD << "Total de alunos alocados com sucesso: " << totalEmparelhados
+         << " de " << this->students.size() << " candidatos." << RESET << "\n"
+         << endl;
 }
