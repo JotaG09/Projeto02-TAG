@@ -23,5 +23,7 @@ class Graph{
           void addEdge(int studentId, int projectId);
           void removeEdge(int studentId, int projectId);
           void galeShapley();
+          bool buscarCaminhoAlternado(Student* s, map<int,bool>& visitados);
+          void executarIteracoesCaminhosAlternados();
           void print();
 };
