@@ -3,92 +3,105 @@
 #include <queue>
 #include "graph.hpp"
 
+// Códigos de cores ANSI para atender à especificação de saída visual colorida
+#define RESET "\033[0m"
+#define RED "\033[31m"    // Rejeição / Desemparelhamento
+#define GREEN "\033[32m"  // Emparelhamento temporário / definitivo
+#define YELLOW "\033[33m" // Proposta ativa
+
 using namespace std;
 
-Graph::Graph(){
-     this->V = 0;
-     this->vertex = vector<Node*>(V);
-     this->students = vector<Student*>(V);
-     this->projects = vector<Project*>(V);
+Graph::Graph()
+{
+    this->V = 0;
+    this->vertex = vector<Node *>(V, nullptr); // Inicializa o vetor de vértices com nullptr, indicando que não há arestas inicialmente
 }
 
 // This function makes a graph, with a students, projects, and a list of vertex
-Graph::Graph(int vStudents, int vProjects, vector<Student*> students, vector<Project*> projects){
-     this->V = vStudents + vProjects;
-     this->vertex = vector<Node*>(this->V, nullptr);
-     this->students = vector<Student*>(vStudents);
-     this->projects = vector<Project*>(vProjects);
-     for(int j = 0; j < vStudents; j++){
-          this->students[j] = students[j];
-     }
-     for(int k = 0; k < vProjects; k++){
-          this->projects[k] = projects[k];
-     }
+Graph::Graph(int vStudents, int vProjects, vector<Student *> students, vector<Project *> projects)
+{
+    this->V = vStudents + vProjects + 1; // +1 para evitar problemas com IDs baseados em 1
+    this->vertex = vector<Node *>(this->V, nullptr);
+    this->students = students;
+    this->projects = projects;
 }
 
-void Graph::addEdge(int studentId, int projectId){
-     Node* newNode = new Node();
-     newNode->dest = studentId;
-     newNode->next = this->vertex[projectId];
-     this->vertex[projectId] = newNode;
+void Graph::addEdge(int studentId, int projectId)
+{
+    // Adiciona na lista de adjacência do projeto
+    Node *newNode = new Node();
+    newNode->dest = studentId;
+    newNode->next = this->vertex[projectId];
+    this->vertex[projectId] = newNode;
 
-     (this->students[studentId])->occupy();
+    // Adiciona na lista de adjacência do estudante
+    Node *newNode2 = new Node();
+    newNode2->dest = projectId;
+    newNode2->next = this->vertex[studentId];
+    this->vertex[studentId] = newNode2;
 
-     Node* newNode2 = new Node();
-     newNode2->dest = projectId;
-     newNode2->next = this->vertex[studentId];
-     this->vertex[studentId] = newNode2;
+    // Atualiza o estado do estudante
+    for (auto s : students)
+    {
+        if (s->getId() == studentId)
+        {
+            s->occupy();
+            break;
+        }
+    }
 }
 
-void Graph::removeEdge(int studentId, int projectId){
-     (this->vertex[studentId])->next = nullptr;
-     (this->students[studentId])->libarate();
-     Node* current = this->vertex[projectId];
-     while(current != nullptr){
-          if((current->next)->dest == projectId){
-               Node* newNode = current->next;
-               current->next = newNode->next;
-               delete newNode;
-          }
-          current = current->next;
-     }
+void Graph::removeEdge(int studentId, int projectId)
+{
+    // 1. Remove da lista do estudante
+    Node *current = this->vertex[studentId];
+    Node *prev = nullptr;
+    while (current != nullptr && current->dest != projectId)
+    {
+        prev = current;
+        current = current->next;
+    }
+    if (current != nullptr)
+    {
+        if (prev == nullptr)
+            this->vertex[studentId] = current->next;
+        else
+            prev->next = current->next;
+        delete current;
+    }
+
+    // 2. Remove da lista do projeto
+    current = this->vertex[projectId];
+    prev = nullptr;
+    while (current != nullptr && current->dest != studentId)
+    {
+        prev = current;
+        current = current->next;
+    }
+    if (current != nullptr)
+    {
+        if (prev == nullptr)
+            this->vertex[projectId] = current->next;
+        else
+            prev->next = current->next;
+        delete current;
+    }
+
+    // Libera o estado do estudante
+    for (auto s : students)
+    {
+        if (s->getId() == studentId)
+        {
+            s->libarate();
+            break;
+        }
+    }
 }
 
-void Graph::galeShapley(){
-     stack<Project*> projectsFree;
-     vector<Student*> studentsFree = this->students;
-     for(size_t i = 0; i < (this->projects).size(); i++){
-          projectsFree.push(this->projects[i]);
-     }
-     Project* p;
-     Student* s;
-     int currentProjectId;
-     int minGrade;
-     int maxStudents;
-     size_t j;
-     while(!projectsFree.empty()){
-          p = projectsFree.top();
-          minGrade = p->getMinGrade();
-          maxStudents = p->getMaxStudents();
-          for( j = 0; j < studentsFree.size(); j++){
-               s = studentsFree[j];
-               if(s->getGrade() < minGrade) continue;
-               if(s->isFree()){
-                    addEdge(s->getId(), p->getId());
-               }
-               else {
-                    currentProjectId = ((this->vertex[s->getId()])->next)->dest;
-                    if(s->comparePreferences(currentProjectId, p->getId())){
-                         // If the student preferer the new project than the current project
-                         removeEdge(s->getId(), currentProjectId);
-                         addEdge(s->getId(), p->getId());
-                    }
-                    else continue;
-               }
-          }
-     }
+void Graph::galeShapley()
+{
 }
 
-void Graph::print(){
-
+void Graph::print()
+{
 }
