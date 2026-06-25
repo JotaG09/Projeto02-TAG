@@ -103,7 +103,7 @@ int main()
 
         // 3. Executa as Iterações 2 a 10: Otimização por Caminhos Alternados
         // (Descomente a linha abaixo se tiver implementado este método no graph.cpp)
-        // g.executarIteracoesCaminhosAlternados();
+        g.executarIteracoesCaminhosAlternados();
 
         // 4. Imprime a Matriz Final de Ganhos / Perdas no terminal
         g.print();

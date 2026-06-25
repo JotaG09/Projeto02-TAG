@@ -282,29 +282,19 @@ void Graph::saveToDot(const string &nome_arquivo, bool apenasAlocados)
 {
     ofstream out(nome_arquivo);
     if (!out.is_open())
-    {
-        cerr << "Erro ao criar o ficheiro DOT: " << nome_arquivo << endl;
         return;
-    }
 
-    out << "graph G {\n";
-    out << "  rankdir=LR;\n";   // Desenha da Esquerda (Projetos) para a Direita (Alunos)
-    out << "  splines=true;\n"; // Linhas curvas e suaves
+    out << "graph G {\n  rankdir=LR;\n  splines=true;\n";
     out << "  node [fontname=\"Helvetica,Arial\", style=filled];\n\n";
 
-    // ---------------------------------------------------------
-    // 1. COLUNA DA ESQUERDA: PROJETOS
-    // ---------------------------------------------------------
-    out << "  subgraph cluster_projetos {\n";
-    out << "    label=\"PROJETOS OFERTADOS\";\n";
+    // Cluster de Projetos
+    out << "  subgraph cluster_projetos {\n    label=\"PROJETOS OFERTADOS\";\n";
     out << "    bgcolor=\"#F8FAFC\"; color=\"#CBD5E1\";\n";
     out << "    node [shape=box, fillcolor=\"#DBEAFE\", color=\"#1E3A8A\", fontcolor=\"#1E3A8A\"];\n";
 
     for (Project *p : this->projects)
     {
         int pId = p->getId();
-
-        // Conta quantos alunos estão fisicamente ligados a este projeto
         int ocupadas = 0;
         Node *curr = this->vertex[OFFSET + pId];
         while (curr != nullptr)
@@ -313,56 +303,197 @@ void Graph::saveToDot(const string &nome_arquivo, bool apenasAlocados)
             curr = curr->next;
         }
 
-        // Se o filtro estiver ativo e o projeto estiver vazio, não desenha
         if (apenasAlocados && ocupadas == 0)
             continue;
-
-        out << "    P" << pId << " [label=\"P" << pId << " (" << ocupadas << "/" << p->getMaxStudents() << " vagas)\"];\n";
+        out << "    P" << pId << " [label=\"P" << pId << " (" << ocupadas << "/" << p->getMaxStudents() << " vagas)\\nMin: " << p->getMinGrade() << "\"];\n";
     }
     out << "  }\n\n";
 
-    // ---------------------------------------------------------
-    // 2. COLUNA DA DIREITA: ALUNOS
-    // ---------------------------------------------------------
-    out << "  subgraph cluster_alunos {\n";
-    out << "    label=\"ALUNOS CANDIDATOS\";\n";
+    // Cluster de Alunos
+    out << "  subgraph cluster_alunos {\n    label=\"ALUNOS CANDIDATOS\";\n";
     out << "    bgcolor=\"#F8FAFC\"; color=\"#CBD5E1\";\n";
 
     for (Student *s : this->students)
     {
         int sId = s->getId();
-        bool possuiProjeto = (this->vertex[sId] != nullptr);
-
-        if (apenasAlocados && !possuiProjeto)
+        bool alocado = (this->vertex[sId] != nullptr);
+        if (apenasAlocados && !alocado)
             continue;
 
-        if (possuiProjeto)
-        {
-            // Aluno com vaga -> Elipse Verde
-            out << "    A" << sId << " [shape=ellipse, fillcolor=\"#DCFCE7\", color=\"#166534\", fontcolor=\"#166534\", label=\"A" << sId << " (Nota " << s->getGrade() << ")\"];\n";
-        }
-        else
-        {
-            // Aluno sem vaga -> Elipse Vermelha
-            out << "    A" << sId << " [shape=ellipse, fillcolor=\"#FEE2E2\", color=\"#991B1B\", fontcolor=\"#991B1B\", label=\"A" << sId << " (Sem Vaga)\"];\n";
-        }
+        string corFundo = alocado ? "#DCFCE7" : "#FEE2E2";
+        string corBorda = alocado ? "#166534" : "#991B1B";
+        out << "    A" << sId << " [shape=ellipse, fillcolor=\"" << corFundo << "\", color=\"" << corBorda
+            << "\", fontcolor=\"" << corBorda << "\", label=\"A" << sId << " (Nota " << s->getGrade() << ")\"];\n";
     }
     out << "  }\n\n";
 
-    // ---------------------------------------------------------
-    // 3. ARESTAS (AS LIGAÇÕES DO EMPARELHAMENTO)
-    // ---------------------------------------------------------
-    out << "  // Conexões de Emparelhamento Estável\n";
+    // ========================================================================
+    // TAXONOMIA DAS 3 CORES DE ARESTAS (PROPOSTA ATIVA, EMPARELHAMENTO, REJEIÇÃO)
+    // ========================================================================
+    out << "  // Arestas do Grafo\n";
     for (Student *s : this->students)
     {
         int sId = s->getId();
-        if (this->vertex[sId] != nullptr)
+        int projetoAlocado = (this->vertex[sId] != nullptr) ? this->vertex[sId]->dest : -1;
+        if (apenasAlocados && projetoAlocado == -1)
+            continue;
+
+        vector<int> prefs = s->getPreferencesId();
+        bool achouAlocado = false;
+
+        for (int pId : prefs)
         {
-            int pId = this->vertex[sId]->dest; // O destino real do aluno é o ID do projeto
-            out << "  A" << sId << " -- P" << pId << " [color=\"#166534\", penwidth=2.0];\n";
+            Project *p = getProject(pId);
+            if (!p)
+                continue;
+
+            // 1. EMPARELHAMENTO FINAL/TEMPORÁRIO (Verde Sólido)
+            if (pId == projetoAlocado)
+            {
+                out << "  A" << sId << " -- P" << pId << " [color=\"#166534\", penwidth=2.5, label=\"Emparelhado\"];\n";
+                achouAlocado = true;
+            }
+            // 2. REJEIÇÃO (Vermelho Pontilhado)
+            else if (!achouAlocado || projetoAlocado == -1)
+            {
+                string motivo = (s->getGrade() < p->getMinGrade()) ? "Rejeição: Nota < " + to_string(p->getMinGrade()) : "Rejeição: Sem Vaga";
+                out << "  A" << sId << " -- P" << pId << " [color=\"#991B1B\", style=\"dotted\", penwidth=1.2, fontcolor=\"#991B1B\", fontsize=9, label=\"" << motivo << "\"];\n";
+            }
+            // 3. PROPOSTA ATIVA / POTENCIAL (Azul Sólido)
+            else
+            {
+                out << "  A" << sId << " -- P" << pId << " [color=\"#2563EB\", style=\"solid\", penwidth=1.0, fontcolor=\"#2563EB\", fontsize=9, label=\"Proposta Ativa\"];\n";
+            }
         }
     }
-
     out << "}\n";
     out.close();
+}
+
+// ============================================================================
+// BUSCA DETERMINÍSTICA POR CAMINHO ALTERNADO (RESPEITANDO O HPP)
+// ============================================================================
+bool Graph::buscarCaminhoAlternado(Student *s, std::map<int, bool> &visitados)
+{
+    if (!s)
+        return false;
+
+    for (int pId : s->getPreferencesId())
+    {
+        Project *p = getProject(pId);
+        if (!p)
+            continue;
+
+        // Regra de Negócio: Requisito mínimo de nota é intransponível
+        if (s->getGrade() < p->getMinGrade())
+            continue;
+
+        // Se o projeto já foi testado nesta tentativa de caminho, pula
+        if (visitados[pId])
+            continue;
+        visitados[pId] = true;
+
+        // Coleta todos os alunos atualmente emparelhados neste projeto
+        vector<int> alocados;
+        Node *curr = this->vertex[OFFSET + pId];
+        while (curr != nullptr)
+        {
+            alocados.push_back(curr->dest);
+            curr = curr->next;
+        }
+
+        // CASO 1: O projeto ainda tem vaga ociosa. Achamos o fim do caminho aumentante!
+        if ((int)alocados.size() < p->getMaxStudents())
+        {
+            addEdge(s->getId(), pId);
+            return true;
+        }
+
+        // CASO 2: Projeto cheio. Tenta deslocar algum aluno já alocado para outra vaga.
+        // Ordenamos os alocados por ID para manter o determinismo estrito (sem aleatoriedade)
+        sort(alocados.begin(), alocados.end());
+
+        for (int outroAlunoId : alocados)
+        {
+            Student *outroAluno = getStudent(outroAlunoId);
+            if (!outroAluno)
+                continue;
+
+            // Desfaz temporariamente o emparelhamento existente
+            removeEdge(outroAlunoId, pId);
+
+            // Tenta achar recursivamente um novo lugar para o aluno deslocado
+            if (buscarCaminhoAlternado(outroAluno, visitados))
+            {
+                addEdge(s->getId(), pId); // Sucesso! O novo assume a vaga
+                return true;
+            }
+
+            // Se o deslocado não achou vaga, revertemos a remoção
+            addEdge(outroAlunoId, pId);
+        }
+    }
+    return false;
+}
+
+// ============================================================================
+// LAÇO DAS 10 ITERAÇÕES OBRIGATÓRIAS DE RE-EMPARELHAMENTO
+// ============================================================================
+void Graph::executarIteracoesCaminhosAlternados()
+{
+    cout << "\n"
+         << CYAN << BOLD << "============================================================================================" << RESET << endl;
+    cout << CYAN << BOLD << "               EVOLUÇÃO DO EMPARELHAMENTO: 10 ITERAÇÕES (CAMINHOS ALTERNADOS)               " << RESET << endl;
+    cout << CYAN << BOLD << "============================================================================================" << RESET << "\n"
+         << endl;
+
+    for (int iter = 1; iter <= 10; iter++)
+    {
+        int aumentosNaRodada = 0;
+
+        // 1. Coleta todos os alunos que continuam sem projeto
+        vector<Student *> livres;
+        for (Student *s : this->students)
+        {
+            if (this->vertex[s->getId()] == nullptr)
+            {
+                livres.push_back(s);
+            }
+        }
+
+        // 2. Ordenação determinística por ID (Garante que não seja aleatório)
+        sort(livres.begin(), livres.end(), [](Student *a, Student *b)
+             { return a->getId() < b->getId(); });
+
+        // 3. Dispara a busca por caminhos alternados para cada solteiro
+        for (Student *s : livres)
+        {
+            // Inicializa o mapa de visitados para os projetos de 1 a 50
+            std::map<int, bool> visitados;
+            for (Project *p : this->projects)
+            {
+                visitados[p->getId()] = false;
+            }
+
+            if (buscarCaminhoAlternado(s, visitados))
+            {
+                aumentosNaRodada++;
+            }
+        }
+
+        // 4. Auditoria da cardinalidade atual |M|
+        int cardinalidadeAtual = 0;
+        for (Student *s : this->students)
+        {
+            if (this->vertex[s->getId()] != nullptr)
+                cardinalidadeAtual++;
+        }
+
+        cout << BOLD << "Iteração " << setw(2) << setfill('0') << iter << setfill(' ') << RESET
+             << " -> Novos caminhos aumentantes: " << (aumentosNaRodada > 0 ? GREEN : YELLOW)
+             << setw(2) << aumentosNaRodada << RESET
+             << " | Cardinalidade Total |M|: " << GREEN << BOLD << cardinalidadeAtual << RESET << endl;
+    }
+    cout << "\n"
+         << endl;
 }
