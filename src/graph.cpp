@@ -71,9 +71,18 @@ void Graph::addEdge(int studentId, int projectId)
     newNode2->next = this->vertex[studentId];
     this->vertex[studentId] = newNode2;
 
+    // =========================================================================
+    // SINCRONIZAÇÃO DE ESTADO POO (Mantém os objetos vivos e atualizados)
+    // =========================================================================
     Student *s = getStudent(studentId);
-    if (s)
-        s->occupy();
+    Project *p = getProject(projectId);
+
+    if (s && p)
+    {
+        s->occupy();              // Marca o aluno como ocupado
+        s->setProject(projectId); // Salva o ID do projeto dentro do objeto Student
+        p->addStudent(studentId); // Salva o ID do aluno no vetor do objeto Project
+    }
 }
 
 void Graph::removeEdge(int studentId, int projectId)
@@ -278,14 +287,24 @@ void Graph::print()
          << endl;
 }
 
-void Graph::saveToDot(const string &nome_arquivo, bool apenasAlocados)
+void Graph::saveToDot(const string &nome_arquivo, bool apenasAlocados, bool apenasArestasFinais)
 {
     ofstream out(nome_arquivo);
     if (!out.is_open())
         return;
 
-    out << "graph G {\n  rankdir=LR;\n  splines=true;\n";
-    out << "  node [fontname=\"Helvetica,Arial\", style=filled];\n\n";
+    out << "graph G {\n  rankdir=LR;\n";
+    out << "  splines=true;\n";
+
+    // O TRUQUE DO GRAPHVIZ: Se for o modo limpo, aumenta a distância horizontal (ranksep)
+    // e diminui a vertical (nodesep) para as linhas verdes não dobrarem em ângulos agressivos.
+    if (apenasArestasFinais)
+    {
+        out << "  ranksep=2.8;\n";
+        out << "  nodesep=0.15;\n";
+    }
+
+    out << "  node [fontname=\"Helvetica,Arial\", style=filled, fontsize=10];\n\n";
 
     // Cluster de Projetos
     out << "  subgraph cluster_projetos {\n    label=\"PROJETOS OFERTADOS\";\n";
@@ -305,12 +324,12 @@ void Graph::saveToDot(const string &nome_arquivo, bool apenasAlocados)
 
         if (apenasAlocados && ocupadas == 0)
             continue;
-        out << "    P" << pId << " [label=\"P" << pId << " (" << ocupadas << "/" << p->getMaxStudents() << " vagas)\\nMin: " << p->getMinGrade() << "\"];\n";
+        out << "    P" << pId << " [label=\"P" << pId << " (" << ocupadas << "/" << p->getMaxStudents() << ")\"];\n";
     }
     out << "  }\n\n";
 
     // Cluster de Alunos
-    out << "  subgraph cluster_alunos {\n    label=\"ALUNOS CANDIDATOS\";\n";
+    out << "  subgraph cluster_alunos {\n    label=\"ALUNOS ALOCADOS\";\n";
     out << "    bgcolor=\"#F8FAFC\"; color=\"#CBD5E1\";\n";
 
     for (Student *s : this->students)
@@ -327,9 +346,6 @@ void Graph::saveToDot(const string &nome_arquivo, bool apenasAlocados)
     }
     out << "  }\n\n";
 
-    // ========================================================================
-    // TAXONOMIA DAS 3 CORES DE ARESTAS (PROPOSTA ATIVA, EMPARELHAMENTO, REJEIÇÃO)
-    // ========================================================================
     out << "  // Arestas do Grafo\n";
     for (Student *s : this->students)
     {
@@ -347,22 +363,31 @@ void Graph::saveToDot(const string &nome_arquivo, bool apenasAlocados)
             if (!p)
                 continue;
 
-            // 1. EMPARELHAMENTO FINAL/TEMPORÁRIO (Verde Sólido)
+            // 1. EMPARELHAMENTO FINAL (Verde Sólido)
             if (pId == projetoAlocado)
             {
-                out << "  A" << sId << " -- P" << pId << " [color=\"#166534\", penwidth=2.5, label=\"Emparelhado\"];\n";
+                // SE O MODO LIMPO ESTÁ ATIVO: Removemos o texto "Emparelhado" da linha.
+                // Palavras flutuantes em 58 linhas cruzadas viram uma tarja preta ilegível!
+                string configAresta = apenasArestasFinais ? "penwidth=2.0, weight=3" : "penwidth=2.5, label=\"Emparelhado\"";
+
+                out << "  A" << sId << " -- P" << pId << " [color=\"#166534\", " << configAresta << "];\n";
                 achouAlocado = true;
             }
-            // 2. REJEIÇÃO (Vermelho Pontilhado)
+            // SE O MODO LIMPO ESTÁ ATIVO: Ignora instantaneamente propostas e rejeições
+            else if (apenasArestasFinais)
+            {
+                continue;
+            }
+            // 2. REJEIÇÃO (Vermelho)
             else if (!achouAlocado || projetoAlocado == -1)
             {
-                string motivo = (s->getGrade() < p->getMinGrade()) ? "Rejeição: Nota < " + to_string(p->getMinGrade()) : "Rejeição: Sem Vaga";
-                out << "  A" << sId << " -- P" << pId << " [color=\"#991B1B\", style=\"dotted\", penwidth=1.2, fontcolor=\"#991B1B\", fontsize=9, label=\"" << motivo << "\"];\n";
+                string motivo = (s->getGrade() < p->getMinGrade()) ? "Nota < " + to_string(p->getMinGrade()) : "Sem Vaga";
+                out << "  A" << sId << " -- P" << pId << " [color=\"#991B1B\", style=\"dotted\", penwidth=1.0, fontcolor=\"#991B1B\", fontsize=8, label=\"" << motivo << "\"];\n";
             }
-            // 3. PROPOSTA ATIVA / POTENCIAL (Azul Sólido)
+            // 3. PROPOSTA ATIVA (Azul)
             else
             {
-                out << "  A" << sId << " -- P" << pId << " [color=\"#2563EB\", style=\"solid\", penwidth=1.0, fontcolor=\"#2563EB\", fontsize=9, label=\"Proposta Ativa\"];\n";
+                out << "  A" << sId << " -- P" << pId << " [color=\"#2563EB\", style=\"solid\", penwidth=1.0, fontcolor=\"#2563EB\", fontsize=8, label=\"Proposta Ativa\"];\n";
             }
         }
     }
@@ -370,6 +395,9 @@ void Graph::saveToDot(const string &nome_arquivo, bool apenasAlocados)
     out.close();
 }
 
+// ============================================================================
+// BUSCA DETERMINÍSTICA POR CAMINHO ALTERNADO (RESPEITANDO O HPP)
+// ============================================================================
 // ============================================================================
 // BUSCA DETERMINÍSTICA POR CAMINHO ALTERNADO (RESPEITANDO O HPP)
 // ============================================================================
@@ -413,23 +441,26 @@ bool Graph::buscarCaminhoAlternado(Student *s, std::map<int, bool> &visitados)
         // Ordenamos os alocados por ID para manter o determinismo estrito (sem aleatoriedade)
         sort(alocados.begin(), alocados.end());
 
+        // ---> É EXATAMENTE AQUI QUE ENTRA O SEU TRECHO: <---
         for (int outroAlunoId : alocados)
         {
             Student *outroAluno = getStudent(outroAlunoId);
             if (!outroAluno)
                 continue;
 
-            // Desfaz temporariamente o emparelhamento existente
-            removeEdge(outroAlunoId, pId);
-
-            // Tenta achar recursivamente um novo lugar para o aluno deslocado
-            if (buscarCaminhoAlternado(outroAluno, visitados))
+            // GUARDA DE ESTABILIDADE: Um proponente jamais pode rebaixar a nota de um alocado!
+            if (s->getGrade() < outroAluno->getGrade())
             {
-                addEdge(s->getId(), pId); // Sucesso! O novo assume a vaga
-                return true;
+                continue;
             }
 
-            // Se o deslocado não achou vaga, revertemos a remoção
+            removeEdge(outroAlunoId, pId);
+
+            if (buscarCaminhoAlternado(outroAluno, visitados))
+            {
+                addEdge(s->getId(), pId);
+                return true;
+            }
             addEdge(outroAlunoId, pId);
         }
     }

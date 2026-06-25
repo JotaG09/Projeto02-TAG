@@ -31,5 +31,5 @@ public:
     Student *getStudent(int id);
     Project *getProject(int id);
     void gerarSnapshotVisual(const string &nomeArquivo, int estudanteAtivo = -1, int projetoAtivo = -1, int estudanteRejeitado = -1);
-    void saveToDot(const string& nome_arquivo, bool apenasAlocados = true);
+    void saveToDot(const string& nome_arquivo, bool apenasAlocados = true, bool apenasArestasFinais = false);
 };

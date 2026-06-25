@@ -108,7 +108,11 @@ int main()
         // 4. Imprime a Matriz Final de Ganhos / Perdas no terminal
         g.print();
 
-        g.saveToDot("docs/grafo_emparelhado.dot", true);
+        // 1. Arquivo exigido pelo edital (com as 3 cores de arestas e histórico)
+        g.saveToDot("docs/grafo_completo_edital.dot", true, false);
+
+        // 2. Arquivo visual limpo (APENAS as 58 conexões finais bem distribuídas)
+        g.saveToDot("docs/grafo_limpo_relatorio.dot", true, true);
 
         cout << "Arquivo de visualização gerado em: docs/grafo_emparelhado.dot" << endl;
 
