@@ -108,9 +108,6 @@ int main()
         // 4. Imprime a Matriz Final de Ganhos / Perdas no terminal
         g.print();
 
-        // 1. Arquivo exigido pelo edital (com as 3 cores de arestas e histórico)
-        g.saveToDot("docs/grafo_completo_edital.dot", true, false);
-
         // 2. Arquivo visual limpo (APENAS as 58 conexões finais bem distribuídas)
         g.saveToDot("docs/grafo_limpo_relatorio.dot", true, true);
 
