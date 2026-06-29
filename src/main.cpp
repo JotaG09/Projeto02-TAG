@@ -121,7 +121,6 @@ int main()
         cerr << "Erro: Não foi possível inicializar o Grafo devido a dados ausentes." << endl;
     }
 
-    // --- LIBERTAÇÃO DE MEMÓRIA (BOA PRÁTICA OBRIGATÓRIA EM C++) ---
     // Evita memory leaks libertando os objetos alocados com 'new'
     for (auto a : lista_alunos)
     {
