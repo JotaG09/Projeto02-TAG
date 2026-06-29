@@ -19,7 +19,10 @@ Projeto02-TAG/
 │
 ├── docs/              # Documentações e arquivos de entrada
 │   └── entradaProj2.26TAG.txt
+|   └── Grafo_Alocacao_Final.png
+|   └── TAG_Projeto_2.pdf
 │
+|   Projeto02_TAG.ipynb
 ├── Makefile           # Script de automação da compilação
 └── README.md          # Este arquivo de instruções
 ```
